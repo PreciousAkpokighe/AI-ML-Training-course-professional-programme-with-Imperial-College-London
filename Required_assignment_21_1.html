@@ -1,0 +1,200 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Required assignment 21.1: Building an interpretable decision tree
+# 
+#  Decision trees are effective tools for automated decision-making, but their true business value lies in being transparent and understandable. In this assignment, you will see how to make a decision tree interpretable.
+
+# In[1]:
+
+
+#import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt
+from sklearn.tree import _tree
+
+
+# The dataset used in this assignment contains, loan-related information used for analysis and modeling. It includes various features such as applicant information, loan amount, income, credit score, and loan status.
+# 
+# 
+
+# In[2]:
+
+
+# Load your dataset into df (replace with actual data loading)
+df = pd.read_csv('data/loandata.csv')
+
+
+# ### Question 1: Encode the Categorical Columns
+# 
+# Encode the categorical columns ['field', 'selectiveCollege', 'sex'] using LabelEncoder and update the DataFrame df.Save the output to `df[col]`.
+
+# In[3]:
+
+
+###GRADED CELL
+categorical_cols = ['field', 'selectiveCollege', 'sex']
+# YOUR CODE HERE
+for col in categorical_cols:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col])
+    #print(f"Encoded {col}: {dict(zip(le.classes_, le.transform(le.classes_)))}")
+print(f"Encoded {col}: {dict(zip(le.classes_, le.transform(le.classes_)))}")
+
+
+# In[ ]:
+
+
+
+
+
+
+# ### Question 2: Create Test and Training Datasets
+# Split the data into training and test sets using train_test_split with 20% `test_size` and `random_seed=42`, creating X_train, X_test, y_train, y_test.
+
+# In[4]:
+
+
+### GRADED CELL
+X_train = None
+X_test = None
+y_train = None
+y_test = None
+# YOUR CODE HERE
+X = df[['field', 'graduationYear', 'loanAmount', 'selectiveCollege', 'sex']]
+y = df['Default']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+print(X_train.shape)
+print(X_test.shape)
+print(y_train.shape)
+print(y_test.shape)
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# ### Question 3: Train a Decision Tree Classifier
+# Create and train a DecisionTreeClassifier with `max_depth=3`, `min_samples_leaf=5` and `random_state=42` using the training data and assign to `clf`.
+
+# In[5]:
+
+
+###GRADED CELL
+clf = None
+# YOUR CODE HERE
+clf = DecisionTreeClassifier(max_depth=3, min_samples_leaf=5, random_state=42)
+clf.fit(X_train, y_train)
+print(clf)
+
+
+# In[ ]:
+
+
+
+
+
+# ### Question 4: Calculate the Model's Accuracy
+# Calculate and print the accuracy score of the trained decision tree on the test set and store it in the variable `accuracy`.
+
+# In[6]:
+
+
+###GRADED CELL
+accuracy = None
+# YOUR CODE HERE
+accuracy = clf.score(X_test, y_test)
+print(f"Test Accuracy: {accuracy:.2f}")
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[7]:
+
+
+# Visualize the tree
+plt.figure(figsize=(12,8))
+plot_tree(
+    clf,
+    feature_names=X.columns,
+    class_names=['No Default', 'Default'],
+    filled=True,
+    rounded=True,
+    fontsize=10
+)
+plt.title("Interpretable Decision Tree for Loan Default Prediction")
+plt.show()
+
+
+# ### Question 5: Print the Tree's Rules
+#     
+# Complete the function recurse(node, depth) to print the decision tree rules. Your implementation should:
+# 
+# - Check whether the current node is a decision node or a leaf node.
+# 
+# - Print the feature and threshold used for splitting, if it is a decision node. 
+# 
+# - Recursively call the function on the left and right child nodes.
+# 
+# - If it is a leaf node, print the predicted class and its probability.
+# 
+# - Use the provided tree_, feature_names, and class_names to format your output.
+
+# In[9]:
+
+
+### GRADED CELL
+
+tree_ = clf.tree_
+feature_names = list(X.columns)
+class_names = ['No Default', 'Default']
+
+def recurse(node, depth):
+    indent = "  " * depth
+    ### BEGIN SOLUTION
+    if tree_.feature[node] != _tree.TREE_UNDEFINED:
+        name = feature_names[tree_.feature[node]]
+        threshold = tree_.threshold[node]
+        print(f"{indent}if {name} <= {int(threshold)}:")
+        recurse(tree_.children_left[node], depth + 1)
+        print(f"{indent}else:  # if {name} > {int(threshold)}")
+        recurse(tree_.children_right[node], depth + 1)
+    else:
+        counts = tree_.value[node][0]
+        total = counts.sum()
+        proba = counts / total
+        predicted = class_names[proba.argmax()]
+        print(f"{indent}Predict: {predicted} with probability {proba.max():.2f} (n={int(total)})")
+    ### END SOLUTION
+
+print("Decision Tree Rules:")
+recurse(0, 0)
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
